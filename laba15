@@ -1,1 +1,277 @@
+##Program
 
+using System;
+using System.Windows.Forms;
+
+namespace laba15
+{
+    static class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
+        }
+    }
+}
+
+
+
+##Form1.Designer
+namespace laba15
+{
+    partial class Form1
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(950, 600);
+            this.Name = "Form1";
+            this.Text = "Лабораторная работа 15";
+            this.ResumeLayout(false);
+        }
+    }
+}
+
+
+
+##Form1
+using System;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
+
+namespace laba15
+{
+    public partial class Form1 : Form
+    {
+        private Button btnColor, btnFont, btnFile, btnFolder;
+        private Panel panelColor;
+        private TextBox txtFont, txtFile, txtFolder;
+
+        private TextBox txtX, txtN, txtResult;
+        private RichTextBox rtbLog;
+        private Button btnCalc, btnSave, btnLoad, btnListColor, btnResultFont;
+
+        public Form1()
+        {
+            InitializeComponent();
+            SetupUI();
+        }
+
+        private void SetupUI()
+        {
+            this.Text = "Лабораторная работа 15 (Вариант 13)";
+            this.Size = new Size(950, 600);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            // ================= ЗАДАНИЕ 1 =================
+            GroupBox gbTask1 = new GroupBox() { Text = "15.3.1. Учебная задача", Location = new Point(10, 10), Size = new Size(450, 200) };
+
+            btnColor = new Button() { Text = "Выбор цвета", Location = new Point(10, 25), Width = 120 };
+            btnColor.Click += BtnColor_Click;
+
+            panelColor = new Panel() { Location = new Point(140, 25), Size = new Size(280, 25), BorderStyle = BorderStyle.FixedSingle };
+
+            btnFont = new Button() { Text = "Выбор шрифта", Location = new Point(10, 65), Width = 120 };
+            btnFont.Click += BtnFont_Click;
+
+            txtFont = new TextBox() { Text = "Образец шрифта", Location = new Point(140, 65), Width = 280, ReadOnly = true };
+
+            btnFile = new Button() { Text = "Выбор файла", Location = new Point(10, 105), Width = 120 };
+            btnFile.Click += BtnFile_Click;
+
+            txtFile = new TextBox() { Location = new Point(140, 105), Width = 280, ReadOnly = true };
+
+            btnFolder = new Button() { Text = "Выбор каталога", Location = new Point(10, 145), Width = 120 };
+            btnFolder.Click += BtnFolder_Click;
+
+            txtFolder = new TextBox() { Location = new Point(140, 145), Width = 280, ReadOnly = true };
+
+            gbTask1.Controls.AddRange(new Control[] { btnColor, panelColor, btnFont, txtFont, btnFile, txtFile, btnFolder, txtFolder });
+
+            // ================= ВАРИАНТ 13 =================
+            GroupBox gbTask2 = new GroupBox() { Text = "15.3.2. Индивидуальное задание (Вариант 13)", Location = new Point(10, 220), Size = new Size(900, 330) };
+
+            Label lblX = new Label() { Text = "Значение x (рад):", Location = new Point(10, 25), AutoSize = true };
+            txtX = new TextBox() { Text = "0,9", Location = new Point(120, 22), Width = 50 };
+
+            Label lblN = new Label() { Text = "Число слагаемых N (>0):", Location = new Point(200, 25), AutoSize = true };
+            txtN = new TextBox() { Text = "8", Location = new Point(340, 22), Width = 50 };
+
+            btnCalc = new Button() { Text = "Вычислить выражение j", Location = new Point(420, 20), Width = 180, Height = 30, BackColor = Color.LightBlue };
+            btnCalc.Click += BtnCalc_Click;
+
+            Label lblResult = new Label() { Text = "Результат (j):", Location = new Point(10, 65), AutoSize = true, Font = new Font("Arial", 10, FontStyle.Bold) };
+            txtResult = new TextBox() { Location = new Point(120, 63), Width = 150, ReadOnly = true, Font = new Font("Arial", 10, FontStyle.Bold), ForeColor = Color.Red };
+
+            rtbLog = new RichTextBox() { Location = new Point(10, 100), Size = new Size(600, 210), ReadOnly = true, Font = new Font("Consolas", 9) };
+
+            btnSave = new Button() { Text = "1. Сохранить расчет (SaveFileDialog)", Location = new Point(630, 100), Width = 250 };
+            btnSave.Click += BtnSave_Click;
+
+            btnLoad = new Button() { Text = "2. Загрузить x, N (OpenFileDialog)", Location = new Point(630, 140), Width = 250 };
+            btnLoad.Click += BtnLoad_Click;
+
+            btnListColor = new Button() { Text = "3. Цвет списка (ColorDialog)", Location = new Point(630, 180), Width = 250 };
+            btnListColor.Click += BtnListColor_Click;
+
+            btnResultFont = new Button() { Text = "4. Шрифт результата (FontDialog)", Location = new Point(630, 220), Width = 250 };
+            btnResultFont.Click += BtnResultFont_Click;
+
+            gbTask2.Controls.AddRange(new Control[] { lblX, txtX, lblN, txtN, btnCalc, lblResult, txtResult, rtbLog, btnSave, btnLoad, btnListColor, btnResultFont });
+
+            this.Controls.Add(gbTask1);
+            this.Controls.Add(gbTask2);
+        }
+
+        // ================= ЗАДАНИЕ 1 =================
+        private void BtnColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog dlg = new ColorDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                panelColor.BackColor = dlg.Color;
+            }
+        }
+
+        private void BtnFont_Click(object sender, EventArgs e)
+        {
+            FontDialog dlg = new FontDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                txtFont.Font = dlg.Font;
+            }
+        }
+
+        private void BtnFile_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                txtFile.Text = dlg.FileName;
+            }
+        }
+
+        private void BtnFolder_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog dlg = new FolderBrowserDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                txtFolder.Text = dlg.SelectedPath;
+            }
+        }
+
+        // ================= ВАРИАНТ 13 =================
+        private void BtnCalc_Click(object sender, EventArgs e)
+        {
+            rtbLog.Clear();
+            try
+            {
+                double x = Convert.ToDouble(txtX.Text.Replace('.', ','));
+                int N = Convert.ToInt32(txtN.Text);
+
+                if (N <= 0)
+                {
+                    MessageBox.Show("N должно быть больше 0");
+                    return;
+                }
+
+                double j = 0;
+
+                for (int i = 1; i <= N; i++)
+                {
+                    double sign = (i % 2 != 0) ? -1 : 1;
+                    double sinArg = Math.Pow(x, i);
+                    double sinPower = 2 * i + 1;
+                    double numerator = Math.Pow(Math.Sin(sinArg), sinPower);
+                    double denominator = (2.0 * i - 1.0) * (2.0 * i + 1.0);
+                    
+                    double term = sign * (numerator / denominator);
+                    j += term;
+
+                    string signStr = sign < 0 ? "-" : "+";
+                    rtbLog.AppendText($"Шаг {i}: {signStr} sin^{sinPower}(x^{i}) / ({2*i-1}*{2*i+1}) = {term:F8}\n");
+                }
+
+                rtbLog.AppendText("--------------------------------------\n");
+                rtbLog.AppendText($"ИТОГО: j = {j:F8}\n");
+                txtResult.Text = j.ToString("F8");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка ввода данных: " + ex.Message);
+            }
+        }
+
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog dlg = new SaveFileDialog() { Filter = "Текстовые файлы (*.txt)|*.txt" };
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    File.WriteAllText(dlg.FileName, $"{txtX.Text}\n{txtN.Text}\n{rtbLog.Text}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка сохранения: " + ex.Message);
+                }
+            }
+        }
+
+        private void BtnLoad_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog() { Filter = "Текстовые файлы (*.txt)|*.txt" };
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(dlg.FileName);
+                    if (lines.Length >= 2)
+                    {
+                        txtX.Text = lines[0];
+                        txtN.Text = lines[1];
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка загрузки: " + ex.Message);
+                }
+            }
+        }
+
+        private void BtnListColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog dlg = new ColorDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                rtbLog.BackColor = dlg.Color;
+            }
+        }
+
+        private void BtnResultFont_Click(object sender, EventArgs e)
+        {
+            FontDialog dlg = new FontDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                txtResult.Font = dlg.Font;
+            }
+        }
+    }
+}
