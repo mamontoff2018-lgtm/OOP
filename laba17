@@ -1,1 +1,358 @@
+// =========================================================================
+// ФАЙЛ 1: Program.cs
+// =========================================================================
+using System;
+using System.Windows.Forms;
 
+namespace laba17
+{
+    static class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
+        }
+    }
+}
+
+// =========================================================================
+// ФАЙЛ 2: Form1.Designer.cs
+// =========================================================================
+namespace laba17
+{
+    partial class Form1
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(900, 650);
+            this.Name = "Form1";
+            this.Text = "Лабораторная работа 17";
+            this.ResumeLayout(false);
+        }
+    }
+}
+
+// =========================================================================
+// ФАЙЛ 3: Form1.cs (Задание 1 и Вариант 13)
+// =========================================================================
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+
+namespace laba17
+{
+    public partial class Form1 : Form
+    {
+        // --- Переменные для Задания 1 (График) ---
+        private TabControl tabControl;
+        private Panel panelGraph;
+        private TextBox txtA, txtP, txtK, txtB;
+        private ComboBox comboMode;
+        private Color graphColor = Color.Blue;
+
+        // --- Переменные для Варианта 13 ---
+        private Panel panelVariant;
+        private Color sectorColor = Color.Gray;
+        private bool isHovering = false;
+        
+        private Point ptX = new Point(-1, -1); 
+        private Point ptY = new Point(-1, -1); 
+        private bool isDraggingX = false;
+        private bool isDraggingY = false;
+        
+        private Font animFont = new Font("Arial", 14, FontStyle.Bold);
+        private Color animColor = Color.Black;
+
+        public Form1()
+        {
+            InitializeComponent();
+            SetupUI();
+        }
+
+        private void SetupUI()
+        {
+            this.Text = "Лабораторная работа 17 (GDI+)";
+            this.Size = new Size(900, 650);
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.DoubleBuffered = true; // Убирает мерцание
+
+            tabControl = new TabControl() { Dock = DockStyle.Fill };
+            TabPage page1 = new TabPage("Задание 1: График функции");
+            TabPage page2 = new TabPage("Задание 2: Вариант 13");
+
+            // ================= НАСТРОЙКА 1 ВКЛАДКИ =================
+            Panel pnlControls1 = new Panel() { Dock = DockStyle.Top, Height = 50 };
+            
+            pnlControls1.Controls.Add(new Label() { Text = "a:", Location = new Point(10, 15) });
+            txtA = new TextBox() { Text = "5", Location = new Point(30, 12), Width = 40 };
+            pnlControls1.Controls.Add(txtA);
+
+            pnlControls1.Controls.Add(new Label() { Text = "p:", Location = new Point(80, 15) });
+            txtP = new TextBox() { Text = "-0,5", Location = new Point(100, 12), Width = 40 };
+            pnlControls1.Controls.Add(txtP);
+
+            pnlControls1.Controls.Add(new Label() { Text = "k:", Location = new Point(150, 15) });
+            txtK = new TextBox() { Text = "20", Location = new Point(170, 12), Width = 40 };
+            pnlControls1.Controls.Add(txtK);
+
+            pnlControls1.Controls.Add(new Label() { Text = "b:", Location = new Point(220, 15) });
+            txtB = new TextBox() { Text = "400", Location = new Point(240, 12), Width = 40 };
+            pnlControls1.Controls.Add(txtB);
+
+            Button btnDraw = new Button() { Text = "Перерисовать", Location = new Point(300, 10), Width = 100 };
+            btnDraw.Click += (s, e) => panelGraph.Invalidate();
+            pnlControls1.Controls.Add(btnDraw);
+
+            Button btnColor = new Button() { Text = "Цвет графика", Location = new Point(410, 10), Width = 100 };
+            btnColor.Click += BtnColor_Click;
+            pnlControls1.Controls.Add(btnColor);
+
+            comboMode = new ComboBox() { Location = new Point(520, 10), Width = 100, DropDownStyle = ComboBoxStyle.DropDownList };
+            comboMode.Items.AddRange(new object[] { "Линия", "Точки" });
+            comboMode.SelectedIndex = 0;
+            comboMode.SelectedIndexChanged += (s, e) => panelGraph.Invalidate();
+            pnlControls1.Controls.Add(comboMode);
+
+            panelGraph = new Panel() { Dock = DockStyle.Fill, BackColor = Color.White };
+            panelGraph.Paint += PanelGraph_Paint;
+
+            page1.Controls.Add(panelGraph);
+            page1.Controls.Add(pnlControls1);
+
+            // ================= НАСТРОЙКА 2 ВКЛАДКИ =================
+            panelVariant = new Panel() { Dock = DockStyle.Fill, BackColor = Color.White };
+            panelVariant.Paint += PanelVariant_Paint;
+            panelVariant.MouseMove += PanelVariant_MouseMove;
+            panelVariant.MouseDown += PanelVariant_MouseDown;
+            panelVariant.MouseUp += PanelVariant_MouseUp;
+            panelVariant.MouseClick += PanelVariant_MouseClick;
+
+            page2.Controls.Add(panelVariant);
+
+            tabControl.TabPages.Add(page1);
+            tabControl.TabPages.Add(page2);
+            this.Controls.Add(tabControl);
+
+            Timer animTimer = new Timer() { Interval = 500 };
+            animTimer.Tick += AnimTimer_Tick;
+            animTimer.Start();
+        }
+
+        // ================= ЛОГИКА ЗАДАНИЯ 1 =================
+        private void BtnColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog dlg = new ColorDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                graphColor = dlg.Color;
+                panelGraph.Invalidate();
+            }
+        }
+
+        private void PanelGraph_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            try
+            {
+                double a = Convert.ToDouble(txtA.Text.Replace('.', ','));
+                double p = Convert.ToDouble(txtP.Text.Replace('.', ','));
+                double k = Convert.ToDouble(txtK.Text.Replace('.', ','));
+                double b = Convert.ToDouble(txtB.Text.Replace('.', ','));
+
+                Pen pen = new Pen(graphColor, 2);
+                int cx = panelGraph.Width / 2;
+                int cy = panelGraph.Height / 2;
+
+                g.DrawLine(Pens.Black, 0, cy, panelGraph.Width, cy);
+                g.DrawLine(Pens.Black, cx, 0, cx, panelGraph.Height);
+
+                double maxY = 0;
+                for (double x = -100; x <= 100; x += 0.5)
+                {
+                    if (x == 0) continue;
+                    double y = Math.Abs(a * Math.Pow(x, -p) * Math.Sin(k * x + b));
+                    if (y > maxY) maxY = y;
+                }
+                if (maxY == 0) maxY = 1;
+
+                double scaleX = (panelGraph.Width / 2.0) / 100;
+                double scaleY = (panelGraph.Height / 2.0) / (maxY * 1.1); 
+
+                PointF? prevPoint = null;
+
+                for (double x = -100; x <= 100; x += 0.5)
+                {
+                    if (x == 0) { prevPoint = null; continue; }
+                    double y = a * Math.Pow(x, -p) * Math.Sin(k * x + b);
+
+                    float px = (float)(cx + x * scaleX);
+                    float py = (float)(cy - y * scaleY);
+
+                    if (py < -1000 || py > 1000) { prevPoint = null; continue; }
+
+                    if (comboMode.SelectedIndex == 0)
+                    {
+                        if (prevPoint.HasValue) g.DrawLine(pen, prevPoint.Value, new PointF(px, py));
+                        prevPoint = new PointF(px, py);
+                    }
+                    else
+                    {
+                        g.FillEllipse(new SolidBrush(graphColor), px - 1, py - 1, 3, 3);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        // ================= ЛОГИКА ВАРИАНТА 13 =================
+        private void PanelVariant_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                ColorDialog dlg = new ColorDialog();
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    sectorColor = dlg.Color;
+                    panelVariant.Invalidate();
+                }
+            }
+        }
+
+        private void AnimTimer_Tick(object sender, EventArgs e)
+        {
+            if (animColor == Color.Black) 
+            {
+                animColor = Color.Red;
+                animFont = new Font("Arial", 16, FontStyle.Bold);
+            }
+            else 
+            {
+                animColor = Color.Black;
+                animFont = new Font("Arial", 14, FontStyle.Bold);
+            }
+            panelVariant.Invalidate();
+        }
+
+        private void PanelVariant_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDraggingX) { ptX = new Point(e.X, e.Y); panelVariant.Invalidate(); return; }
+            if (isDraggingY) { ptY = new Point(e.X, e.Y); panelVariant.Invalidate(); return; }
+
+            int cx = panelVariant.Width / 2;
+            int cy = panelVariant.Height / 2;
+            int scale = Math.Min(panelVariant.Width, panelVariant.Height) / 6;
+
+            Region rgn = GetShadedRegion(cx, cy, scale);
+            bool inside = rgn.IsVisible(e.Location);
+
+            if (inside != isHovering)
+            {
+                isHovering = inside;
+                panelVariant.Invalidate();
+            }
+        }
+
+        private Region GetShadedRegion(int cx, int cy, int scale)
+        {
+            GraphicsPath largePath = new GraphicsPath();
+            largePath.AddEllipse(cx - 2 * scale, cy - 2 * scale, 4 * scale, 4 * scale);
+            Region rgn = new Region(largePath);
+
+            GraphicsPath smallPath = new GraphicsPath();
+            smallPath.AddEllipse(cx, cy - 1 * scale, 2 * scale, 2 * scale);
+            rgn.Exclude(smallPath);
+
+            GraphicsPath aboveLine = new GraphicsPath();
+            aboveLine.AddPolygon(new Point[] { 
+                new Point(cx - 10 * scale, cy + 10 * scale), 
+                new Point(cx - 10 * scale, cy - 10 * scale), 
+                new Point(cx + 10 * scale, cy - 10 * scale)  
+            });
+            rgn.Intersect(aboveLine);
+
+            return rgn;
+        }
+
+        private void PanelVariant_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            int cx = panelVariant.Width / 2;
+            int cy = panelVariant.Height / 2;
+            int scale = Math.Min(panelVariant.Width, panelVariant.Height) / 6;
+
+            if (ptX.X == -1) ptX = new Point(cx + 2 * scale + 20, cy - 10);
+            if (ptY.X == -1) ptY = new Point(cx + 10, cy - 2 * scale - 30);
+
+            Pen axisPen = new Pen(Color.Black, 2);
+
+            g.DrawLine(axisPen, cx - 3 * scale, cy, cx + 3 * scale, cy);
+            g.DrawLine(axisPen, cx, cy - 3 * scale, cx, cy + 3 * scale);
+            
+            g.DrawLine(axisPen, cx + 3 * scale, cy, cx + 3 * scale - 10, cy - 5);
+            g.DrawLine(axisPen, cx + 3 * scale, cy, cx + 3 * scale - 10, cy + 5);
+            g.DrawLine(axisPen, cx, cy - 3 * scale, cx - 5, cy - 3 * scale + 10);
+            g.DrawLine(axisPen, cx, cy - 3 * scale, cx + 5, cy - 3 * scale + 10);
+
+            g.DrawEllipse(new Pen(Color.Black, 1.5f), cx - 2 * scale, cy - 2 * scale, 4 * scale, 4 * scale);
+            g.DrawEllipse(new Pen(Color.Black, 1.5f), cx, cy - 1 * scale, 2 * scale, 2 * scale);
+            g.DrawLine(new Pen(Color.Black, 1.5f), cx - 2.5f * scale, cy + 2.5f * scale, cx + 2.5f * scale, cy - 2.5f * scale);
+
+            Region shadedRegion = GetShadedRegion(cx, cy, scale);
+            Brush brush = isHovering ? new SolidBrush(Color.Orange) : new SolidBrush(sectorColor);
+            g.FillRegion(brush, shadedRegion);
+
+            Pen dotPen = new Pen(Color.Black, 1) { DashStyle = DashStyle.Dot };
+            g.DrawLine(dotPen, cx + 1 * scale, cy - 1 * scale, cx + 1 * scale, cy);
+            g.DrawLine(dotPen, cx + 1 * scale, cy - 1 * scale, cx + 2 * scale, cy - 1 * scale);
+
+            g.DrawString("X", animFont, new SolidBrush(animColor), ptX);
+            g.DrawString("Y", animFont, new SolidBrush(animColor), ptY);
+
+            Font numFont = new Font("Arial", 12);
+            g.DrawString("2", numFont, Brushes.Black, cx + 2 * scale - 5, cy + 5);
+            g.DrawString("-2", numFont, Brushes.Black, cx - 2 * scale - 20, cy + 5);
+            g.DrawString("2", numFont, Brushes.Black, cx + 5, cy - 2 * scale - 5);
+            g.DrawString("-2", numFont, Brushes.Black, cx + 5, cy + 2 * scale + 5);
+            g.DrawString("1", numFont, Brushes.Black, cx + 1 * scale - 5, cy + 5);
+            g.DrawString("1", numFont, Brushes.Black, cx + 5, cy - 1 * scale - 5);
+            g.DrawString("0", numFont, Brushes.Black, cx - 15, cy + 5);
+        }
+
+        private void PanelVariant_MouseDown(object sender, MouseEventArgs e)
+        {
+            Rectangle rectX = new Rectangle(ptX.X - 10, ptX.Y - 10, 40, 40);
+            Rectangle rectY = new Rectangle(ptY.X - 10, ptY.Y - 10, 40, 40);
+
+            if (rectX.Contains(e.Location)) isDraggingX = true;
+            if (rectY.Contains(e.Location)) isDraggingY = true;
+        }
+
+        private void PanelVariant_MouseUp(object sender, MouseEventArgs e)
+        {
+            isDraggingX = false;
+            isDraggingY = false;
+        }
+    }
+}
