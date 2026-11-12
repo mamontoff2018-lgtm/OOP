@@ -1,1 +1,124 @@
+// =========================================================================
+// ФАЙЛ 1: App.xaml
+// =========================================================================
+<Application x:Class="laba18.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+    </Application.Resources>
+</Application>
 
+// =========================================================================
+// ФАЙЛ 2: App.xaml.cs
+// =========================================================================
+using System.Windows;
+
+namespace laba18
+{
+    public partial class App : Application
+    {
+    }
+}
+
+// =========================================================================
+// ФАЙЛ 3: MainWindow.xaml
+// =========================================================================
+<Window x:Class="laba18.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Лабораторная работа 18 (Вариант 13)" Height="450" Width="550"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Z = Σ Σ (2 * x^i + 3 * y^j)" 
+                   FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+
+        <WrapPanel Grid.Row="1" HorizontalAlignment="Center" Margin="5">
+            <Label Content="N (целое):" VerticalAlignment="Center" FontWeight="Bold"/>
+            <TextBox Name="txtN" Width="60" Text="3" Margin="5" VerticalContentAlignment="Center"/>
+            
+            <Label Content="K (целое):" VerticalAlignment="Center" Margin="15,0,0,0" FontWeight="Bold"/>
+            <TextBox Name="txtK" Width="60" Text="3" Margin="5" VerticalContentAlignment="Center"/>
+        </WrapPanel>
+
+        <WrapPanel Grid.Row="2" HorizontalAlignment="Center" Margin="5">
+            <Label Content="Значение x:" VerticalAlignment="Center" FontWeight="Bold"/>
+            <TextBox Name="txtX" Width="60" Text="1,5" Margin="5" VerticalContentAlignment="Center"/>
+            
+            <Label Content="Значение y:" VerticalAlignment="Center" Margin="15,0,0,0" FontWeight="Bold"/>
+            <TextBox Name="txtY" Width="60" Text="2,0" Margin="5" VerticalContentAlignment="Center"/>
+        </WrapPanel>
+
+        <Button Grid.Row="3" Name="btnCalculate" Content="Вычислить Z" Width="160" Height="40" 
+                Margin="0,25,0,20" Background="#FF2196F3" Foreground="White" 
+                FontWeight="Bold" FontSize="14" Click="btnCalculate_Click"/>
+
+        <TextBlock Grid.Row="4" Text="Результат Z:" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center"/>
+        <TextBlock Grid.Row="5" Name="txtResult" FontSize="32" FontWeight="Bold" 
+                   Foreground="Red" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0"/>
+    </Grid>
+</Window>
+
+// =========================================================================
+// ФАЙЛ 4: MainWindow.xaml.cs (Вариант 13)
+// =========================================================================
+using System;
+using System.Windows;
+
+namespace laba18
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void btnCalculate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int N = Convert.ToInt32(txtN.Text);
+                int K = Convert.ToInt32(txtK.Text);
+                
+                double x = Convert.ToDouble(txtX.Text.Replace('.', ','));
+                double y = Convert.ToDouble(txtY.Text.Replace('.', ','));
+
+                if (N <= 0 || K <= 0)
+                {
+                    MessageBox.Show("Значения N и K должны быть больше нуля!", "Ошибка");
+                    return;
+                }
+
+                double Z = 0;
+
+                for (int i = 1; i <= N; i++)
+                {
+                    for (int j = 1; j <= K; j++)
+                    {
+                        Z += 2 * Math.Pow(x, i) + 3 * Math.Pow(y, j);
+                    }
+                }
+
+                txtResult.Text = Z.ToString("F4");
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Пожалуйста, введите корректные числа! Дробная часть отделяется запятой.", "Ошибка формата");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Произошла ошибка: " + ex.Message, "Ошибка");
+            }
+        }
+    }
+}
