@@ -1,1 +1,99 @@
+// =========================================================================
+// ФАЙЛ 1: Program.cs (Вариант 13)
+// =========================================================================
+using System;
+using System.Threading;
 
+namespace laba22
+{
+    // Пользовательский делегат для асинхронного метода
+    public delegate int CountOddsDelegate(int rows, int cols);
+
+    class Program
+    {
+        // Статическая переменная для сохранения матрицы, чтобы вывести её после расчета
+        static int[,] generatedMatrix;
+
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== Лабораторная работа 22 (Вариант 13) ===");
+            Console.WriteLine("Асинхронный подсчет нечетных элементов в матрице.\n");
+
+            Console.Write("Введите количество строк: ");
+            int rows = Convert.ToInt32(Console.ReadLine());
+            
+            Console.Write("Введите количество столбцов: ");
+            int cols = Convert.ToInt32(Console.ReadLine());
+
+            Console.WriteLine("\nЗапуск метода в отдельном потоке...");
+
+            // Создаем экземпляр делегата
+            CountOddsDelegate counter = new CountOddsDelegate(CountOddElementsAsync);
+
+            // Запускаем метод асинхронно
+            IAsyncResult asyncResult = counter.BeginInvoke(rows, cols, null, null);
+
+            // Пока метод работает, главный поток выводит точки (мониторинг)
+            while (!asyncResult.IsCompleted)
+            {
+                Console.Write(".");
+                Thread.Sleep(150);
+            }
+
+            Console.WriteLine("\nРабота метода завершена!");
+
+            // Получаем результат работы метода
+            int oddCount = counter.EndInvoke(asyncResult);
+
+            // Выводим сгенерированную матрицу на экран
+            Console.WriteLine("\nСгенерированная матрица случайных чисел:");
+            PrintMatrix(generatedMatrix, rows, cols);
+
+            // Выводим итоговый результат
+            Console.WriteLine($"\nКоличество нечетных элементов: {oddCount}");
+            Console.WriteLine($"Общее количество элементов: {rows * cols}");
+            
+            Console.WriteLine("\nНажмите любую клавишу для выхода...");
+            Console.ReadKey();
+        }
+
+        // Метод, который будет выполняться асинхронно в отдельном потоке
+        static int CountOddElementsAsync(int rows, int cols)
+        {
+            Random rnd = new Random();
+            generatedMatrix = new int[rows, cols];
+            int oddCount = 0;
+
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    generatedMatrix[i, j] = rnd.Next(1, 100); // Числа от 1 до 99
+
+                    if (generatedMatrix[i, j] % 2 != 0)
+                    {
+                        oddCount++;
+                    }
+
+                    // Искусственная задержка, чтобы главный поток успел вывести точки
+                    Thread.Sleep(50); 
+                }
+            }
+
+            return oddCount;
+        }
+
+        // Вспомогательный метод для вывода матрицы
+        static void PrintMatrix(int[,] matrix, int rows, int cols)
+        {
+            for (int i = 0; i < rows; i++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    Console.Write($"{matrix[i, j],4} ");
+                }
+                Console.WriteLine();
+            }
+        }
+    }
+}
