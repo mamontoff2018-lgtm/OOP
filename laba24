@@ -1,1 +1,93 @@
+// =========================================================================
+// ПРОЕКТ 1: CylinderData
+// ФАЙЛ 1.1: Cylinder.cs
+// =========================================================================
+namespace CylinderData
+{
+    public class Cylinder
+    {
+        public double R { get; set; }
+        public double H { get; set; }
 
+        public Cylinder(double r, double h)
+        {
+            R = r;
+            H = h;
+        }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 2: CylinderLogic
+// ФАЙЛ 2.1: Calculator.cs
+// =========================================================================
+using System;
+using CylinderData;
+
+namespace CylinderLogic
+{
+    public class Calculator
+    {
+        // Метод для расчета объема: V = π * R^2 * h
+        public static double GetVolume(Cylinder c)
+        {
+            return Math.PI * Math.Pow(c.R, 2) * c.H;
+        }
+
+        // Метод для расчета площади поверхности: S = 2 * π * R * (R + h)
+        public static double GetSurfaceArea(Cylinder c)
+        {
+            return 2 * Math.PI * c.R * (c.R + c.H);
+        }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 3: laba24
+// ФАЙЛ 3.1: Program.cs (Вариант 13)
+// =========================================================================
+using System;
+using CylinderData;
+using CylinderLogic;
+
+namespace laba24
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== Лабораторная работа 24 (Вариант 13) ===");
+            Console.WriteLine("Расчет площади поверхности и объема цилиндра.\n");
+
+            try
+            {
+                Console.Write("Введите радиус R: ");
+                double r = Convert.ToDouble(Console.ReadLine());
+
+                Console.Write("Введите высоту h: ");
+                double h = Convert.ToDouble(Console.ReadLine());
+
+                if (r <= 0 || h <= 0)
+                {
+                    Console.WriteLine("Ошибка: значения должны быть больше нуля.");
+                    return;
+                }
+
+                Cylinder myCylinder = new Cylinder(r, h);
+
+                double volume = Calculator.GetVolume(myCylinder);
+                double surfaceArea = Calculator.GetSurfaceArea(myCylinder);
+
+                Console.WriteLine($"\nОбъем цилиндра: {volume:F2}");
+                Console.WriteLine($"Площадь поверхности: {surfaceArea:F2}");
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Ошибка: введены некорректные числа (используйте запятую для дробей).");
+            }
+            
+            Console.WriteLine("\nНажмите любую клавишу для выхода...");
+            Console.ReadKey();
+        }
+    }
+}
