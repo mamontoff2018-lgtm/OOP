@@ -1,1 +1,191 @@
+// =========================================================================
+// ФАЙЛ 1: Program.cs
+// =========================================================================
+using System;
+using System.Windows.Forms;
 
+namespace laba16
+{
+    static class Program
+    {
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
+        }
+    }
+}
+
+// =========================================================================
+// ФАЙЛ 2: Form1.Designer.cs
+// =========================================================================
+namespace laba16
+{
+    partial class Form1
+    {
+        private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(1000, 600);
+            this.Name = "Form1";
+            this.Text = "Лабораторная работа 16";
+            this.ResumeLayout(false);
+        }
+    }
+}
+
+// =========================================================================
+// ФАЙЛ 3: Form1.cs (Вариант 13)
+// =========================================================================
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace laba16
+{
+    public partial class Form1 : Form
+    {
+        private DataGridView dgvRawData;
+        private DataGridView dgvSummary;
+        private Button btnLoad;
+        private Label lblTotalProfit;
+        private OpenFileDialog openFileDialog1;
+
+        public Form1()
+        {
+            InitializeComponent();
+            SetupUI();
+        }
+
+        private void SetupUI()
+        {
+            this.Text = "Лабораторная работа 16 (Вариант 13)";
+            this.Size = new Size(1000, 600);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            btnLoad = new Button() { Text = "Загрузить файл данных", Location = new Point(10, 10), Width = 200, Height = 35 };
+            btnLoad.Click += BtnLoad_Click;
+
+            dgvRawData = new DataGridView()
+            {
+                Location = new Point(10, 55),
+                Size = new Size(480, 450),
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+
+            dgvSummary = new DataGridView()
+            {
+                Location = new Point(500, 55),
+                Size = new Size(480, 200),
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            };
+
+            lblTotalProfit = new Label()
+            {
+                Text = "Суммарная прибыль: 0",
+                Location = new Point(500, 270),
+                AutoSize = true,
+                Font = new Font("Arial", 12, FontStyle.Bold),
+                ForeColor = Color.DarkGreen
+            };
+
+            openFileDialog1 = new OpenFileDialog()
+            {
+                Filter = "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*"
+            };
+
+            this.Controls.Add(btnLoad);
+            this.Controls.Add(dgvRawData);
+            this.Controls.Add(dgvSummary);
+            this.Controls.Add(lblTotalProfit);
+        }
+
+        private void BtnLoad_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                LoadAndProcess(openFileDialog1.FileName);
+            }
+        }
+
+        private void LoadAndProcess(string filePath)
+        {
+            List<SaleItem> items = new List<SaleItem>();
+
+            try
+            {
+                string[] lines = File.ReadAllLines(filePath, System.Text.Encoding.UTF8);
+
+                foreach (string line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    string[] parts = line.Split('|');
+                    if (parts.Length == 4)
+                    {
+                        items.Add(new SaleItem
+                        {
+                            Name = parts[0].Trim(),
+                            Group = parts[1].Trim(),
+                            PurchasePrice = Convert.ToDouble(parts[2].Trim().Replace('.', ',')),
+                            SellingPrice = Convert.ToDouble(parts[3].Trim().Replace('.', ','))
+                        });
+                    }
+                }
+
+                dgvRawData.DataSource = null;
+                dgvRawData.DataSource = items;
+
+                double totalProfit = items.Sum(i => i.SellingPrice - i.PurchasePrice);
+                lblTotalProfit.Text = $"Суммарная прибыль: {totalProfit:F2}";
+
+                var summary = items
+                    .GroupBy(i => i.Group)
+                    .Select(g => new
+                    {
+                        Группа = g.Key,
+                        СредняяЦенаЗакупки = Math.Round(g.Average(i => i.PurchasePrice), 2)
+                    })
+                    .ToList();
+
+                dgvSummary.DataSource = null;
+                dgvSummary.DataSource = summary;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при чтении файла:\n" + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public class SaleItem
+        {
+            public string Name { get; set; }
+            public string Group { get; set; }
+            public double PurchasePrice { get; set; }
+            public double SellingPrice { get; set; }
+            public double Profit => SellingPrice - PurchasePrice;
+        }
+    }
+}
