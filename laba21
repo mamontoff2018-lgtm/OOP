@@ -1,1 +1,248 @@
+ВАЗ-2107; АвтоВАЗ; 140000,57; 16000
+Гога-1; Хуань Вей Трейд; 50,00; 1000
+ВАЗ-5000; АвтоВАЗ; 1400000,00; 1000
+X35; Hyundai; 750000; 1
 
+
+// =========================================================================
+// ПРОЕКТ 1: DataTier
+// ФАЙЛ 1.1: Автомобиль.cs
+// =========================================================================
+namespace DataTier
+{
+    public class Автомобиль
+    {
+        public string Модель { get; set; }
+        public string Производитель { get; set; }
+        public double Стоимость { get; set; }
+        public int Пробег { get; set; }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 1: DataTier
+// ФАЙЛ 1.2: ВсеАвтомобили.cs
+// =========================================================================
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+
+namespace DataTier
+{
+    public class ВсеАвтомобили
+    {
+        public static List<Автомобиль> ЗагрузитьИзФайла(string путьКФайлу)
+        {
+            List<Автомобиль> список = new List<Автомобиль>();
+            string[] строки = File.ReadAllLines(путьКФайлу);
+            
+            foreach (string строка in строки)
+            {
+                if (string.IsNullOrWhiteSpace(строка)) continue;
+
+                string[] части = строка.Split(';');
+                if (части.Length == 4)
+                {
+                    string стоимость = части[2].Trim().Replace('.', ',');
+                    
+                    список.Add(new Автомобиль
+                    {
+                        Модель = части[0].Trim(),
+                        Производитель = части[1].Trim(),
+                        Стоимость = Convert.ToDouble(стоимость, CultureInfo.CurrentCulture),
+                        Пробег = Convert.ToInt32(части[3].Trim())
+                    });
+                }
+            }
+            return список;
+        }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 2: LogicTier
+// ФАЙЛ 2.1: АвтомобильнаяПозиция.cs
+// =========================================================================
+using DataTier;
+
+namespace LogicTier
+{
+    public class АвтомобильнаяПозиция
+    {
+        private Автомобиль _авто;
+
+        public АвтомобильнаяПозиция(Автомобиль a)
+        {
+            _авто = a;
+        }
+
+        public string Модель { get { return _авто.Модель; } }
+        public string Производитель { get { return _авто.Производитель; } }
+        public double Стоимость { get { return _авто.Стоимость; } }
+        public int Пробег { get { return _авто.Пробег; } }
+
+        public string ПредставлениеАвто 
+        { 
+            get { return $"{Модель} ({Производитель}) | Цена: {Стоимость:C} | Пробег: {Пробег}"; } 
+        }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 2: LogicTier
+// ФАЙЛ 2.2: СводкаПоПроизводителю.cs
+// =========================================================================
+namespace LogicTier
+{
+    public class СводкаПоПроизводителю
+    {
+        public string Производитель { get; set; }
+        public double СреднийПробег { get; set; }
+        public double СредняяСтоимость { get; set; }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 2: LogicTier
+// ФАЙЛ 2.3: Автосалон.cs
+// =========================================================================
+using System.Collections.Generic;
+using System.Linq;
+using DataTier;
+
+namespace LogicTier
+{
+    public class Автосалон
+    {
+        private List<АвтомобильнаяПозиция> _авто = new List<АвтомобильнаяПозиция>();
+
+        public Автосалон(string путьКФайлу)
+        {
+            List<Автомобиль> сырыеДанные = ВсеАвтомобили.ЗагрузитьИзФайла(путьКФайлу);
+            foreach (var a in сырыеДанные)
+            {
+                _авто.Add(new АвтомобильнаяПозиция(a));
+            }
+        }
+
+        public List<АвтомобильнаяПозиция> СписокАвто { get { return _авто; } }
+        
+        public List<СводкаПоПроизводителю> Сводка
+        {
+            get
+            {
+                return _авто
+                    .GroupBy(a => a.Производитель)
+                    .Select(g => new СводкаПоПроизводителю
+                    {
+                        Производитель = g.Key,
+                        СреднийПробег = g.Average(a => a.Пробег),
+                        СредняяСтоимость = g.Average(a => a.Стоимость)
+                    })
+                    .ToList();
+            }
+        }
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 3: PresentationTier
+// ФАЙЛ 3.1: App.xaml
+// =========================================================================
+<Application x:Class="PresentationTier.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+    </Application.Resources>
+</Application>
+
+// =========================================================================
+// ПРОЕКТ 3: PresentationTier
+// ФАЙЛ 3.2: App.xaml.cs
+// =========================================================================
+using System.Windows;
+
+namespace PresentationTier
+{
+    public partial class App : Application
+    {
+    }
+}
+
+// =========================================================================
+// ПРОЕКТ 3: PresentationTier
+// ФАЙЛ 3.3: MainWindow.xaml (Вариант 13)
+// =========================================================================
+<Window x:Class="PresentationTier.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Автосалон (Вариант 13)" Height="500" Width="950"
+        WindowStartupLocation="CenterScreen">
+    
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+            <Button Content="Загрузить данные из файла" Click="btnLoad_Click" Padding="10,5" FontWeight="Bold" Background="#FF2196F3" Foreground="White"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Header="Список автомобилей" Grid.Column="0" Margin="0,0,5,0">
+                <ListBox x:Name="lstCars" ItemsSource="{Binding СписокАвто}" DisplayMemberPath="ПредставлениеАвто" Margin="5"/>
+            </GroupBox>
+
+            <GroupBox Header="Средние показатели по производителям" Grid.Column="1" Margin="5,0,0,0">
+                <ListView x:Name="lstSummary" ItemsSource="{Binding Сводка}" Margin="5">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Производитель" DisplayMemberBinding="{Binding Производитель}" Width="150"/>
+                            <GridViewColumn Header="Ср. пробег" DisplayMemberBinding="{Binding СреднийПробег, StringFormat={}{0:N0}}" Width="100"/>
+                            <GridViewColumn Header="Ср. стоимость" DisplayMemberBinding="{Binding СредняяСтоимость, StringFormat={}{0:C}}" Width="120"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </GroupBox>
+        </Grid>
+    </Grid>
+</Window>
+
+// =========================================================================
+// ПРОЕКТ 3: PresentationTier
+// ФАЙЛ 3.4: MainWindow.xaml.cs
+// =========================================================================
+using System.Windows;
+using LogicTier;
+using Microsoft.Win32;
+
+namespace PresentationTier
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void btnLoad_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*";
+
+            if (dlg.ShowDialog() == true)
+            {
+                Автосалон салон = new Автосалон(dlg.FileName);
+                this.DataContext = салон;
+            }
+        }
+    }
+}
