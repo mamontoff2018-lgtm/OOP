@@ -1,1 +1,187 @@
+// =========================================================================
+// ФАЙЛ 1: App.xaml
+// =========================================================================
+<Application x:Class="laba19.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+    </Application.Resources>
+</Application>
 
+// =========================================================================
+// ФАЙЛ 2: App.xaml.cs
+// =========================================================================
+using System.Windows;
+
+namespace laba19
+{
+    public partial class App : Application
+    {
+    }
+}
+
+// =========================================================================
+// ФАЙЛ 3: MainWindow.xaml (Стили и триггеры)
+// =========================================================================
+<Window x:Class="laba19.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Лабораторная работа 19 (Вариант 13)" Height="600" Width="800"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <!-- Стиль 1: Градиент + простой триггер -->
+        <Style x:Key="Style1" TargetType="Shape">
+            <Setter Property="Fill">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="Aqua" Offset="0"/>
+                        <GradientStop Color="WhiteSmoke" Offset="0.5"/>
+                        <GradientStop Color="DarkGreen" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Stroke" Value="Blue"/>
+            <Setter Property="StrokeThickness" Value="3"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Stroke" Value="Red"/>
+                    <Setter Property="StrokeThickness" Value="8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль 2: Пунктирная обводка + триггер -->
+        <Style x:Key="Style2" TargetType="Shape">
+            <Setter Property="Fill" Value="Orange"/>
+            <Setter Property="Stroke" Value="Purple"/>
+            <Setter Property="StrokeThickness" Value="4"/>
+            <Setter Property="StrokeDashArray" Value="2 2"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Fill" Value="Yellow"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль 3: Радиальный градиент + прозрачность -->
+        <Style x:Key="Style3" TargetType="Shape">
+            <Setter Property="Fill">
+                <Setter.Value>
+                    <RadialGradientBrush>
+                        <GradientStop Color="LightPink" Offset="0"/>
+                        <GradientStop Color="DeepPink" Offset="1"/>
+                    </RadialGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Stroke" Value="Maroon"/>
+            <Setter Property="StrokeThickness" Value="2"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль 4: Мульти-триггер (два условия) -->
+        <Style x:Key="Style4" TargetType="Shape">
+            <Setter Property="Fill" Value="LightBlue"/>
+            <Setter Property="Stroke" Value="DarkBlue"/>
+            <Setter Property="StrokeThickness" Value="5"/>
+            <Style.Triggers>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                        <Condition Property="Tag" Value="Special"/>
+                    </MultiTrigger.Conditions>
+                    <MultiTrigger.Setters>
+                        <Setter Property="Fill" Value="Lime"/>
+                        <Setter Property="StrokeDashArray" Value="1 1"/>
+                    </MultiTrigger.Setters>
+                </MultiTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="10">
+            <Label Content="Количество фигур:" VerticalAlignment="Center" FontWeight="Bold"/>
+            <TextBox x:Name="txtCount" Width="60" Text="10" Margin="5" VerticalContentAlignment="Center"/>
+            <Button x:Name="btnGenerate" Content="Сгенерировать" Click="btnGenerate_Click" Margin="5" Padding="10,5" Background="#FF2196F3" Foreground="White" FontWeight="Bold"/>
+            <Button x:Name="btnClear" Content="Очистить" Click="btnClear_Click" Margin="5" Padding="10,5" Background="#FFF44336" Foreground="White" FontWeight="Bold"/>
+        </StackPanel>
+
+        <Canvas x:Name="MainCanvas" Grid.Row="1" Background="#F5F5F5" ClipToBounds="True"/>
+    </Grid>
+</Window>
+
+// =========================================================================
+// ФАЙЛ 4: MainWindow.xaml.cs (Логика генерации)
+// =========================================================================
+using System;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Shapes;
+
+namespace laba19
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void btnGenerate_Click(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(txtCount.Text, out int count) || count <= 0)
+            {
+                MessageBox.Show("Введите корректное положительное число фигур!");
+                return;
+            }
+
+            MainCanvas.Children.Clear();
+            Random rnd = new Random();
+
+            for (int i = 0; i < count; i++)
+            {
+                Shape shape;
+                
+                if (rnd.Next(2) == 0)
+                    shape = new Ellipse();
+                else
+                    shape = new Rectangle();
+
+                int styleNum = rnd.Next(1, 5);
+                string styleName = "Style" + styleNum;
+                shape.Style = (Style)FindResource(styleName);
+
+                if (styleNum == 4 && rnd.Next(2) == 0)
+                {
+                    shape.Tag = "Special";
+                }
+
+                shape.Width = rnd.Next(40, 120);
+                shape.Height = rnd.Next(40, 120);
+
+                double x = rnd.Next(0, Math.Max(1, (int)MainCanvas.ActualWidth - 150));
+                double y = rnd.Next(0, Math.Max(1, (int)MainCanvas.ActualHeight - 150));
+
+                Canvas.SetLeft(shape, x);
+                Canvas.SetTop(shape, y);
+
+                MainCanvas.Children.Add(shape);
+            }
+        }
+
+        private void btnClear_Click(object sender, RoutedEventArgs e)
+        {
+            MainCanvas.Children.Clear();
+        }
+    }
+}
