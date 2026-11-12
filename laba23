@@ -1,1 +1,88 @@
+// =========================================================================
+// ФАЙЛ 1: Program.cs (Вариант 13)
+// =========================================================================
+using System;
+using System.Threading;
 
+namespace laba23
+{
+    // Класс для хранения данных и выполнения работы в потоке
+    public class MatrixProcessor
+    {
+        private int _rows;
+        private int _cols;
+
+        // Свойство для возврата результата из потока
+        public int ResultDifference { get; private set; }
+
+        public MatrixProcessor(int r, int c)
+        {
+            _rows = r;
+            _cols = c;
+        }
+
+        // Метод, который будет запущен в отдельном потоке
+        public void ProcessMatrix()
+        {
+            Console.WriteLine($"[Поток] Начинаю генерацию матрицы {_rows}x{_cols}...");
+            
+            Random rnd = new Random();
+            int[,] matrix = new int[_rows, _cols];
+            
+            int max = int.MinValue;
+            int min = int.MaxValue;
+
+            for (int i = 0; i < _rows; i++)
+            {
+                for (int j = 0; j < _cols; j++)
+                {
+                    matrix[i, j] = rnd.Next(1, 100); 
+                    
+                    if (matrix[i, j] > max) max = matrix[i, j];
+                    if (matrix[i, j] < min) min = matrix[i, j];
+
+                    // Задержка для наглядности работы потока
+                    Thread.Sleep(20); 
+                }
+            }
+
+            // Вычисляем разницу и сохраняем в свойство
+            ResultDifference = max - min;
+            
+            Console.WriteLine($"[Поток] Готово! Max = {max}, Min = {min}, Разница = {ResultDifference}");
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("=== Лабораторная работа 23 (Вариант 13) ===");
+            Console.WriteLine("Разница max и min элементов матрицы в отдельном потоке.\n");
+
+            Console.Write("Введите количество строк: ");
+            int r = Convert.ToInt32(Console.ReadLine());
+            
+            Console.Write("Введите количество столбцов: ");
+            int c = Convert.ToInt32(Console.ReadLine());
+
+            // Создаем объект класса с нашими данными
+            MatrixProcessor processor = new MatrixProcessor(r, c);
+
+            // Создаем поток, передавая ему метод экземпляра нашего класса
+            Thread myThread = new Thread(processor.ProcessMatrix);
+            
+            Console.WriteLine("[Главный поток] Запускаю рабочий поток...");
+            myThread.Start();
+
+            Console.WriteLine("[Главный поток] Ожидаю завершения...");
+            myThread.Join(); // Ждем, пока поток завершит работу
+
+            // Получаем результат из свойства объекта
+            Console.WriteLine($"\n[Главный поток] Результат работы: {processor.ResultDifference}");
+            
+            Console.WriteLine("\nНажмите любую клавишу для выхода...");
+            Console.ReadKey();
+        }
+    }
+}
